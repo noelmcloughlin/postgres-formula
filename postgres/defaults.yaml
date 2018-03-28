@@ -14,13 +14,14 @@ postgres:
   user: postgres
   group: postgres
 
+  conf_dir: /var/lib/pgsql/data
+  data_dir: /var/lib/pgsql/data
   prepare_cluster:
-    command: initdb --pgdata=/var/lib/pgsql/data
-    test: test -f /var/lib/pgsql/data/PG_VERSION
+    pgcommand: initdb --pgdata=
+    pgtestfile: PG_VERSION
     user: postgres
     env: []
 
-  conf_dir: /var/lib/pgsql/data
   postgresconf: ""
 
   macos:
@@ -56,6 +57,10 @@ postgres:
 
   bake_image: False
 
+  fromrepo:
+  pkg_repo:
+    name: []
+
   users: {}
   tablespaces: {}
   databases: {}
@@ -65,3 +70,7 @@ postgres:
   linux:
     #Alternatives system are disabled by a 'altpriority=0' pillar.
     altpriority:
+
+  upstream:
+    purgeall: false
+    releases: ['9.2', '9.3', '9.4', '9.5', '9.6', '10',]

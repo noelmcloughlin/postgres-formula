@@ -6,18 +6,42 @@
 install-postgres-dev-package:
   pkg.installed:
     - name: {{ postgres.pkg_dev }}
+    {% if postgres.fromrepo %}
+    - fromrepo: {{ postgres.fromrepo }}
+    {% endif %}
   {% endif %}
 
   {% if postgres.pkg_libpq_dev %}
 install-postgres-libpq-dev:
   pkg.installed:
-    - name: {{ postgres.pkg_libpq_dev }}
+    - name:  postgres.pkg_libpq_dev 
+     if postgres.fromrepo 
+    - fromrepo:  postgres.fromrepo 
+    endif 
   {% endif %}
 
-{% endif %}
+# Alternatives system. Make devclient binaries available in $PATH
+  {%- if 'bin_dir' in postgres and postgres.linux.altpriority %}
+    {%- for bin in postgres.dev_bins %}
+      {%- set path = salt['file.join'](postgres.bin_dir, bin) %}
 
+postgresql-{{ bin }}-altinstall:
+  alternatives.install:
+    - name: {{ bin }}
+    - link: {{ salt['file.join']('/usr/bin', bin) }}
+    - path: {{ path }}
+    - priority: {{ postgres.linux.altpriority }}
+      {% if grains.os in ('Fedora', 'CentOS',) %}
+      {# bypass bug #}
+    - onlyif: alternatives --display {{ bin }}
+      {% else %}
+    - onlyif: test -f {{ path }}
+      {% endif %}
 
-{% if grains.os == 'MacOS' %}
+    {%- endfor %}
+  {%- endif %}
+
+{% elif grains.os == 'MacOS' %}
 
   # Darwin maxfiles limits
   {% if postgres.limits.soft or postgres.limits.hard %}

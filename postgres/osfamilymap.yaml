@@ -4,9 +4,10 @@
 
 Arch:
   conf_dir: /var/lib/postgres/data
+  data_dir: /var/lib/postgres/data
   prepare_cluster:
-    command: initdb -D /var/lib/postgres/data
-    test: test -f /var/lib/postgres/data/PG_VERSION
+    pgcommand: initdb -D
+    pgtestfile: PG_VERSION
   pkg_client: postgresql-libs
   pkg_dev: postgresql
 
@@ -16,12 +17,13 @@ Debian:
     key_url: 'https://www.postgresql.org/media/keys/ACCC4CF8.asc'
     file: /etc/apt/sources.list.d/pgdg.list
   pkg_repo_keyid: ACCC4CF8
-  pkg_dev: postgresql-server-dev-all
 
 FreeBSD:
   user: pgsql
 
 OpenBSD:
+  conf_dir: /var/postgresql/data
+  data_dir: /var/postgresql/data
   user: _postgresql
 
 RedHat:
@@ -30,25 +32,28 @@ RedHat:
     humanname: PostgreSQL {{ repo.version }} $releasever - $basearch
     gpgcheck: 1
     gpgkey: 'https://download.postgresql.org/pub/repos/yum/RPM-GPG-KEY-PGDG-{{ release }}'
-    {% if grains.os == 'Fedora' %}
-    baseurl: 'https://download.postgresql.org/pub/repos/yum/{{ repo.version }}/fedora/fedora-$releasever-$basearch'
-    {% else %}
     baseurl: 'https://download.postgresql.org/pub/repos/yum/{{ repo.version }}/redhat/rhel-$releasever-$basearch'
-    {% endif %}
 
 {% if repo.use_upstream_repo == true %}
-  {% set data_dir = '/var/lib/pgsql/' ~ repo.version ~ '/data' %}
+   {% set data_dir = '/var/lib/pgsql/' ~ repo.version ~ '/data' %}
 
+  fromrepo: pgdg{{ release }}
   pkg: postgresql{{ release }}-server
   pkg_client: postgresql{{ release }}
   pkg_libs: postgresql{{ release }}-libs
+   {% if release < 10 %}
+  pkg_libpq_dev: libpqxx-devel
+   {% else %}
+  pkg_libpq_dev:
+   {% endif %}
   pkg_dev: postgresql{{ release }}-devel
-  conf_dir: /var/lib/pgsql/{{ repo.version }}/data
+  conf_dir: {{ data_dir }}
+  data_dir: {{ data_dir }}
   service: postgresql-{{ repo.version }}
 
   prepare_cluster:
-    command: initdb --pgdata='{{ data_dir }}'
-    test: test -f '{{ data_dir }}/PG_VERSION'
+    pgcommand: initdb --pgdata=
+    pgtestfile: PG_VERSION
 
   # Alternatives system
   linux:
@@ -56,6 +61,8 @@ RedHat:
 
   # directory containing PostgreSQL client executables
   bin_dir: /usr/pgsql-{{ repo.version }}/bin
+  dev_bins:
+    - ecg
   client_bins:
     - clusterdb
     - createdb
@@ -65,17 +72,90 @@ RedHat:
     - droplang
     - dropuser
     - pg_archivecleanup
-    - pg_basebackup
-    - pg_config
-    - pg_dump
-    - pg_dumpall
+
+    #- pg_basebackup
+    #- pg_config
+    #- pg_dump
+    #- pg_dumpall
+    #- pg_restore
+
     - pg_isready
+    # pg_receivewal
     - pg_receivexlog
-    - pg_restore
     - pg_rewind
     - pg_test_fsync
     - pg_test_timing
     - pg_upgrade
+    # pg_waldump
+    - pg_xlogdump
+    - pgbench
+    - psql
+    - reindexdb
+    - vacuumdb
+
+  server_bins:
+    - initdb
+    - pg_controldata
+    - pg_ctl
+    - pg_resetxlog
+    - postgres
+    - postgresql{{ release }}-check-db-dir
+    - postgresql{{ release }}-setup
+    - postmaster
+
+{% else %}
+
+  pkg: postgresql-server
+  pkg_client: postgresql
+  pkg_libpq_dev:
+
+{% endif %}
+
+Suse:
+  pkg_repo:
+    name: pgdg-sles-{{ release }}
+    humanname: PostgreSQL {{ repo.version }} $releasever - $basearch
+    #Using sles-12 upstream repo for opensuse
+    baseurl: 'https://download.postgresql.org/pub/repos/zypp/{{ repo.version }}/suse/sles-12-$basearch'
+    key_url: 'https://download.postgresql.org/pub/repos/zypp/{{ repo.version }}/suse/sles-12-$basearch/repodata/repomd.xml.key'
+    gpgcheck: 1
+    gpgautoimport: True
+
+{% if repo.use_upstream_repo == true %}
+  {% set data_dir = '/var/lib/pgsql/' ~ repo.version ~ '/data' %}
+
+  fromrepo: pgdg-sles-{{ release }}
+  pkg: postgresql{{ release }}-server
+  pkg_client: postgresql{{ release }}
+  pkg_libs: postgresql{{ release }}-libs
+  pkg_libpq_dev: libqpxx
+  pkg_dev: postgresql{{ release }}-devel
+  conf_dir: {{ data_dir }}
+  data_dir: {{ data_dir }}
+  service: postgresql-{{ repo.version }}
+
+  prepare_cluster:
+    pgcommand: initdb --pgdata=
+    pgtestfile: PG_VERSION
+
+  # Alternatives system
+  linux:
+    altpriority: 30
+  # directory containing PostgreSQL client executables
+  bin_dir: /usr/pgsql-{{ repo.version }}/bin
+  dev_bins:
+    - ecg
+  client_bins:
+    - pg_archivecleanup
+    - pg_config
+    - pg_isready
+    - pg_receivewal
+    - pg_receivexlog
+    - pg_rewind
+    - pg_test_fsync
+    - pg_test_timing
+    - pg_upgrade
+    - pg_waldump
     - pg_xlogdump
     - pgbench
     - psql
@@ -95,68 +175,9 @@ RedHat:
 
   pkg: postgresql-server
   pkg_client: postgresql
+  pkg_libpq_dev:
 
 {% endif %}
-  pkg_libpq_dev: libpqxx-devel
-
-Suse:
-  pkg_repo:
-    name: pgdg-sles-{{ release }}
-    humanname: PostgreSQL {{ repo.version }} $releasever - $basearch
-    #Using sles-12 upstream repo for opensuse
-    baseurl: 'https://download.postgresql.org/pub/repos/zypp/{{ repo.version }}/suse/sles-12-$basearch'
-    key_url: 'https://download.postgresql.org/pub/repos/zypp/{{ repo.version }}/suse/sles-12-$basearch/repodata/repomd.xml.key'
-    gpgcheck: 1
-    gpgautoimport: True
-
-{% if repo.use_upstream_repo == true %}
-  {% set lib_dir = '/var/lib/pgsql/' ~ repo.version ~ '/data' %}
-
-  pkg: postgresql{{ release }}-server
-  pkg_client: postgresql{{ release }}
-  pkg_dev: postgresql{{ release }}-devel
-  pkg_libs: postgresql{{ release }}-libs
-  conf_dir: {{ lib_dir }}
-  service: postgresql-{{ repo.version }}
-
-  prepare_cluster:
-    command: /usr/pgsql-{{ repo.version }}/bin/initdb --pgdata='{{ lib_dir }}'
-    test: test -f '{{ lib_dir }}/PG_VERSION'
-
-  # Alternatives system
-  linux:
-    altpriority: 30
-
-  # directory containing PostgreSQL client executables
-  bin_dir: /usr/pgsql-{{ repo.version }}/bin
-  client_bins:
-    - pg_archivecleanup
-    - pg_config
-    - pg_isready
-    - pg_receivexlog
-    - pg_rewind
-    - pg_test_fsync
-    - pg_test_timing
-    - pg_upgrade
-    - pg_xlogdump
-    - pgbench
-  server_bins:
-    - initdb
-    - pg_controldata
-    - pg_ctl
-    - pg_resetxlog
-    - postgres
-    - postgresql{{ release }}-check-db-dir
-    - postgresql{{ release }}-setup
-    - postmaster
-
-{% else %}
-
-  pkg: postgresql-server
-  pkg_client: postgresql
-
-{% endif %}
-  pkg_libpq_dev: libqpxx
 
 {%- if grains.os == 'MacOS' %}
 ## jinja check avoids rendering noise/failure on Linux

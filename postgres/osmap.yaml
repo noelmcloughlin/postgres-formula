@@ -1,0 +1,7 @@
+{% import_yaml "postgres/repo.yaml" as repo %}
+
+Fedora:
+  pkg_repo:
+    baseurl: 'https://download.postgresql.org/pub/repos/yum/{{ repo.version }}/fedora/fedora-$releasever-$basearch'
+  upstream:
+    releases: ['9.4', '9.5', '9.6', '10',]

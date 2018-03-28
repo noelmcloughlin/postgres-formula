@@ -21,15 +21,18 @@
   {% endif %}
 
 {{ codename|default(name, true) }}:
-  # PostgreSQL packages are mostly downloaded from `main` repo component
+  # PostgreSQL packages are downloaded from `main` or `version` repo
+  fromrepo: {{ name }}-pgdg
   pkg_repo:
-    name: 'deb http://apt.postgresql.org/pub/repos/apt {{ name }}-pgdg main {{ repo.version }}'
+    name: 'deb http://apt.postgresql.org/pub/repos/apt {{ name }}-pgdg main {{ version }}'
   pkg: postgresql-{{ version }}
+  pkg_dev: {{ pkg_dev }}
   pkg_client: postgresql-client-{{ version }}
   conf_dir: /etc/postgresql/{{ version }}/main
+  data_dir: /var/lib/postgresql/{{ version }}/main
   prepare_cluster:
-    command: pg_createcluster {{ version }} main
-    test: test -f /var/lib/postgresql/{{ version }}/main/PG_VERSION && test -f /etc/postgresql/{{ version }}/main/postgresql.conf
+    pgcommand: pg_createcluster {{ version }} main -d
+    pgtestfile: PG_VERSION
     user: root
 
 {% endmacro %}
@@ -55,6 +58,7 @@
 
 {{ codename|default(name, true) }}:
   # PostgreSQL packages are mostly downloaded from `main` repo component
+  fromrepo: {{ name }}
   pkg_repo:
     baseurl: 'https://download.postgresql.org/pub/repos/yum/{{ version }}/fedora/fedora-$releasever-$basearch'
 
@@ -81,8 +85,7 @@
 
 ## Fedora
 # `oscodename` grain has long distro name
-{{ fedora_codename('Fedora-25', '9.5', 'Fedora 25 (Twenty Five)') }}
-{{ fedora_codename('Fedora-24', '9.5', 'Fedora 24 (Twenty Four)') }}
-{{ fedora_codename('Fedora-23', '9.4', 'Fedora 23 (Twenty Three)') }}
+{{ fedora_codename('Fedora-27', '9.6', 'Fedora 27 (Twenty Seven)') }}
+{{ fedora_codename('Fedora-26', '9.6', 'Fedora 26 (Twenty Six)') }}
 
 # vim: ft=sls

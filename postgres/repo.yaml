@@ -1,12 +1,11 @@
 # This file allows to get PostgreSQL version and upstream repo settings
 # early from Pillar to set correct lookup dictionaty items
 
-{% import_yaml "postgres/defaults.yaml" as defaults %}
+{% import_yaml "postgres/defaults.yaml" as defs %}
 
-use_upstream_repo: {{ salt['pillar.get']('postgres:use_upstream_repo',
-                                         defaults.postgres.use_upstream_repo) }}
-version: {{ salt['pillar.get']('postgres:version',
-                               defaults.postgres.version) }}
+use_upstream_repo: {{ salt['pillar.get']('postgres:use_upstream_repo', defs.postgres.use_upstream_repo) }}
+version: {{ salt['pillar.get']('postgres:version', defs.postgres.version) }}
+fromrepo: {{ salt['pillar.get']('postgres:fromrepo', defs.postgres.fromrepo) }}
 
 #Early lookup for system user on MacOS
 {% if grains.os == 'MacOS' %}
