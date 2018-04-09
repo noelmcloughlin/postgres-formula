@@ -16,7 +16,7 @@ install-postgres-libpq-dev:
   pkg.installed:
     - name: {{ postgres.pkg_libpq_dev }}
     {% if postgres.fromrepo %}
-    - fromrepo:  postgres.fromrepo 
+    - fromrepo: {{ postgres.fromrepo }}
     {% endif %}
   {% endif %}
 
