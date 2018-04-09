@@ -59,7 +59,7 @@ postgres:
 
   fromrepo:
   pkg_repo:
-    name: []
+    name:
 
   users: {}
   tablespaces: {}
