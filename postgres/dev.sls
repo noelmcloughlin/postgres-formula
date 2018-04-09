@@ -14,10 +14,10 @@ install-postgres-dev-package:
   {% if postgres.pkg_libpq_dev %}
 install-postgres-libpq-dev:
   pkg.installed:
-    - name:  postgres.pkg_libpq_dev 
-     if postgres.fromrepo 
+    - name: {{ postgres.pkg_libpq_dev }}
+    {% if postgres.fromrepo %}
     - fromrepo:  postgres.fromrepo 
-    endif 
+    {% endif %}
   {% endif %}
 
 # Alternatives system. Make devclient binaries available in $PATH
@@ -31,8 +31,7 @@ postgresql-{{ bin }}-altinstall:
     - link: {{ salt['file.join']('/usr/bin', bin) }}
     - path: {{ path }}
     - priority: {{ postgres.linux.altpriority }}
-      {% if grains.os in ('Fedora', 'CentOS',) %}
-      {# bypass bug #}
+      {% if grains.os in ('Fedora', 'CentOS',) %} {# bypass bug #}
     - onlyif: alternatives --display {{ bin }}
       {% else %}
     - onlyif: test -f {{ path }}
