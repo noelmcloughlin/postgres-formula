@@ -22,17 +22,19 @@
   {% else %}
     {% set fromrepo = name %}
     {% set pkg_dev = 'postgresql-server-dev-all' %}
+    {% set conf_dir = '/etc/postgresql/' + version + '/main' %}
+    {% set data_dir = '/var/lib/postgresql/' + version + '/main' %}
   {% endif %}
 
 {{ codename|default(name, true) }}:
   # PostgreSQL packages are mostly downloaded from `main` repo component
+  conf_dir: {{ conf_dir }}
+  data_dir: {{ data_dir }}
   fromrepo: {{ fromrepo }}
   pkg_repo:
     name: 'deb http://apt.postgresql.org/pub/repos/apt {{ name }}-pgdg main {{ version }}'
   pkg: postgresql-{{ version }}
   pkg_client: postgresql-client-{{ version }}
-  conf_dir: /etc/postgresql/{{ version }}/main
-  data_dir: /var/lib/postgresql/{{ version }}/main
   prepare_cluster:
     pgcommand: pg_createcluster {{ version }} main -d
     pgtestfile: PG_VERSION

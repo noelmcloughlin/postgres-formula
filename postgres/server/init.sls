@@ -39,13 +39,11 @@ postgresql-server:
     - require_in:
       - service: postgresql-running
 
-  {%- else %}
+  {%- elif 'bin_dir' in postgres and postgres.linux.altpriority %}
+    {%- for bin in postgres.server_bins %}
+      {%- set path = salt['file.join'](postgres.bin_dir, bin) %}
 
 # Alternatives system. Make server binaries available in $PATH
-    {%- if 'bin_dir' in postgres and postgres.linux.altpriority %}
-      {%- for bin in postgres.server_bins %}
-        {%- set path = salt['file.join'](postgres.bin_dir, bin) %}
-
 postgresql-{{ bin }}-altinstall:
   alternatives.install:
     - name: {{ bin }}
@@ -58,9 +56,7 @@ postgresql-{{ bin }}-altinstall:
     - require_in:
       - cmd: postgresql-cluster-prepared
 
-      {%- endfor %}
-    {%- endif %}
-
+    {%- endfor %}
   {%- endif %}
 
 postgresql-cluster-prepared:
@@ -72,6 +68,7 @@ postgresql-cluster-prepared:
     - recurse:
       - user
       - group
+    - dir_mode: 755
   cmd.run:
  {%- if postgres.prepare_cluster.command is defined %}
       {# support for depreciated 'prepare_cluster.command' pillar #}
@@ -93,15 +90,10 @@ postgresql-config-dir:
     - names:
       - {{ postgres.data_dir }}
       - {{ postgres.conf_dir }}
-    - user: {{ postgres.user }}
-    - group: {{ postgres.group }}
     - dir_mode: {{ postgres.conf_dir_mode }}
-    - force: True
     - file_mode: 644
     - recurse:
-      - user
-      - group
-    - makedirs: True
+      - mode
     - require:
       - cmd: postgresql-cluster-prepared
 

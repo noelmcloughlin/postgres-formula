@@ -14,8 +14,6 @@ postgres:
   user: postgres
   group: postgres
 
-  conf_dir: /var/lib/pgsql/data
-  data_dir: /var/lib/pgsql/data
   prepare_cluster:
     pgcommand: initdb --pgdata=
     pgtestfile: PG_VERSION
@@ -23,6 +21,7 @@ postgres:
     env: []
 
   conf_dir: /var/lib/pgsql/data
+  data_dir: /var/lib/pgsql/data
   conf_dir_mode: '0775'
   postgresconf: ""
 
