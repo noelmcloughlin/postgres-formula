@@ -22,6 +22,8 @@ postgres:
     user: postgres
     env: []
 
+  conf_dir: /var/lib/pgsql/data
+  conf_dir_mode: 0775
   postgresconf: ""
 
   macos:

@@ -95,7 +95,11 @@ postgresql-config-dir:
       - {{ postgres.conf_dir }}
     - user: {{ postgres.user }}
     - group: {{ postgres.group }}
+<<<<<<< HEAD
     - dir_mode: 0700
+=======
+    - dir_mode: {{ postgres.conf_dir_mode }}
+>>>>>>> feb2b38... Allow setting dir mode for conf_dir in pillar
     - force: True
     - file_mode: 644
     - recurse:
