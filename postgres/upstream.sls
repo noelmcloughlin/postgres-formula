@@ -22,7 +22,7 @@ postgresql-repo:
 
   {%- endif -%}
 
-{%- elif grains.os not in ('Windows', 'MacOS',) %}
+{% elif grains.os not in ('Windows', 'MacOS',) %}
 
 postgresql-repo:
   test.show_notification:

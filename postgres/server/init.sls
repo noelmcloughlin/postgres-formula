@@ -14,15 +14,20 @@ include:
 {%- endif %}
 
 {%- set pkgs = [postgres.pkg] + postgres.pkgs_extra %}
+
 # Install, configure and start PostgreSQL server
+
 postgresql-server:
   pkg.installed:
     - pkgs: {{ pkgs }}
-{%- if postgres.use_upstream_repo == true %}
+  {%- if postgres.fromrepo %}
+    - fromrepo: {{ postgres.fromrepo }}
+  {%- endif %}
+  {%- if postgres.use_upstream_repo == true %}
     - refresh: True
     - require:
       - pkgrepo: postgresql-repo
-{%- endif %}
+  {%- endif %}
   {%- if postgres.fromrepo %}
     - fromrepo: {{ postgres.fromrepo }}
   {%- endif %}
@@ -36,13 +41,12 @@ postgresql-server:
     - group: wheel
     - require_in:
       - service: postgresql-running
-  {%- else %}
 
-# Alternatives system. Make server binaries available in $PATH
-    {%- if 'bin_dir' in postgres and postgres.linux.altpriority %}
-      {%- for bin in postgres.server_bins %}
-        {%- set path = salt['file.join'](postgres.bin_dir, bin) %}
+  {%- elif 'bin_dir' in postgres and postgres.linux.altpriority %}
+    {%- for bin in postgres.server_bins %}
+      {%- set path = salt['file.join'](postgres.bin_dir, bin) %}
 
+    # Alternatives system. Make server binaries available in $PATH
 postgresql-{{ bin }}-altinstall:
   alternatives.install:
     - name: {{ bin }}
@@ -55,34 +59,47 @@ postgresql-{{ bin }}-altinstall:
     - require_in:
       - cmd: postgresql-cluster-prepared
 
-      {%- endfor %}
-    {%- endif %}
-
-{%- endif %}
+    {%- endfor %}
+  {%- endif %}
 
 postgresql-cluster-prepared:
+  file.directory:
+    - name: {{ postgres.data_dir }}
+    - user: {{ postgres.user }}
+    - group: {{ postgres.group }}
+    - makedirs: True
+    - recurse:
+      - user
+      - group
+    - dir_mode: 755
   cmd.run:
+ {%- if postgres.prepare_cluster.command is defined %}
+      {# support for depreciated 'prepare_cluster.command' pillar #}
     - name: {{ postgres.prepare_cluster.command }}
+    - unless: {{ postgres.prepare_cluster.test }}
+ {%- else %}
+    - name: {{ postgres.prepare_cluster.pgcommand + ' ' }} {{ postgres.data_dir }}
+    - unless: test -f {{ postgres.data_dir }}/{{ postgres.prepare_cluster.pgtestfile }}
+ {%- endif %}
     - cwd: /
-    - runas: {{ postgres.prepare_cluster.user }}
     - env: {{ postgres.prepare_cluster.env }}
-    - unless:
-      - {{ postgres.prepare_cluster.test }}
+    - runas: {{ postgres.user }} 
     - require:
       - pkg: postgresql-server
+      - file: postgresql-cluster-prepared
 
 postgresql-config-dir:
   file.directory:
-    - name: {{ postgres.conf_dir }}
+    - names:
+      - {{ postgres.data_dir }}
+      - {{ postgres.conf_dir }}
     - user: {{ postgres.user }}
     - group: {{ postgres.group }}
     - dir_mode: {{ postgres.conf_dir_mode }}
     - force: True
     - file_mode: 644
     - recurse:
-      - user
-      - group
-    - makedirs: True
+      - mode
     - require:
       - cmd: postgresql-cluster-prepared
 
@@ -167,7 +184,7 @@ postgresql-tablespace-dir-{{ name }}:
     - name: {{ tblspace.directory }}
     - user: {{ postgres.user }}
     - group: {{ postgres.group }}
-    - mode: 700
+    - mode: 770
     - makedirs: True
     - recurse:
       - user
