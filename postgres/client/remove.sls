@@ -7,6 +7,7 @@ postgresql-client-removed:
       {% if postgres.pkg_client %}
       - {{ postgres.pkg_client }}
       {% endif %}
+      - {{ pkg_libs }}
 
 {%- if postgres.remove.multiple_releases %}
     #search for and cleandown multiple releases

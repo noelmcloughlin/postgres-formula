@@ -187,14 +187,15 @@ Suse:
     - postgresql{{ release }}-check-db-dir
     - postgresql{{ release }}-setup
     - postmaster
+  pkg_libpq_dev: ''   # not part of repo
 
 {% else %}
 
   pkg: postgresql-server
   pkg_client: postgresql
+  pkg_libpq_dev: libpqxx
 
 {% endif %}
-  pkg_libpq_dev: libpqxx
 
 {%- if grains.os == 'MacOS' %}
 ## jinja check avoids rendering noise/failure on Linux
